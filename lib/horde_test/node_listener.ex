@@ -26,6 +26,6 @@ defmodule HordeTest.NodeListener do
     members = 
     [Node.self() | Node.list()]
     |> Enum.map(fn node -> {name, node} end)
-    :ok = Horde.Cluster.set_members(name, members)
+    :ok = Horde.Cluster.set_members(name, members, 10000)
   end
 end

@@ -2,31 +2,29 @@ defmodule HordeTest.Server do
   use GenServer
   require Logger
 
-  def node?() do
-    GenServer.call(via_tuple(__MODULE__), :node)
+  def node?(name) do
+    GenServer.call(via_tuple(name), :node)
   end
+
+  def node?() do
+    node?(__MODULE__)
+  end
+
   
-  def pid?() do
-    case Horde.Registry.lookup(HordeTest.DistRegistry, __MODULE__) do
+  def pid?(name) do
+    case Horde.Registry.lookup(HordeTest.DistRegistry, {Server, name}) do
       [{pid, _}] -> pid
       other ->
         {:error, other}
     end
   end
 
-  def child_spec(opts) do
-    name = Keyword.get(opts, :name, __MODULE__)
-
-    %{
-      id: "#{__MODULE__}_#{name}",
-      start: {__MODULE__, :start_link, [name]},
-      shutdown: 10_000,
-      restart: :transient
-    }
+  def pid?() do
+    pid?(__MODULE__)
   end
 
   def start_link(name) do
-    case GenServer.start_link(__MODULE__, [], name: via_tuple(name)) do
+    case GenServer.start_link(__MODULE__, [name], name: via_tuple(name)) do
       {:ok, pid} ->
         {:ok, pid}
 
@@ -36,20 +34,19 @@ defmodule HordeTest.Server do
     end
   end
   
-  def init(_args) do
-    IO.puts "starting server..."
+  def init([name]) do
     Process.flag(:trap_exit, true)
-    {:ok, nil, {:continue, :load_state}}
+    {:ok, name, {:continue, :load_state}}
   end
 
   def handle_call(:node, _, data) do
     {:reply, Node.self(), data}
   end
   
-  def handle_continue(:load_state, arg) do
-    IO.puts "handle continue with :load_state"
-    IO.inspect arg
-    {:noreply, arg}
+  def handle_continue(:load_state, name) do
+    Logger.info("continue loading in #{Node.self()}")
+    HordeTest.Inspector.track_node(Node.self(), name)
+    {:noreply, name}
   end
 
   def handle_info({:EXIT, _, {:name_conflict, {key, value}, _registry, _pid}}, state) do
@@ -57,10 +54,10 @@ defmodule HordeTest.Server do
     {:stop, :normal, state}
   end
 
-  def terminate(reason, state) do
-    Logger.info("Terminated server with reason #{reason}")
-    state 
+  def terminate(reason, name) do
+    Logger.info("Terminated #{name} with reason #{reason}")
+    name 
   end
 
-  def via_tuple(name), do: {:via, Horde.Registry, {HordeTest.DistRegistry, name}}
+  def via_tuple(name), do: {:via, Horde.Registry, {HordeTest.DistRegistry, {Server, name}}}
 end
