@@ -26,12 +26,12 @@ Once your cluster is ready, then you can start a new server:
 HordeTest.add_server()
 ```
 
-Then you get its location and pid:
+Then you can get its location and pid:
 
 ```
 iex(node1@127.0.0.1)4> HordeTest.server_info()
 {:"node3@127.0.0.1", #PID<17345.3591.0>}
 ```
 
-Finally, you can start trying to add more servers, disconnecting, killing nodes or reconnecting nodes and see how Horde behaves.
+Finally, you can start trying to add more servers, disconnecting, killing or reconnecting nodes and see how Horde behaves.
 
