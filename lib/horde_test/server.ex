@@ -44,7 +44,8 @@ defmodule HordeTest.Server do
   end
   
   def handle_continue(:load_state, name) do
-    Logger.info("continue loading in #{Node.self()}")
+    ## This is a bottlneck. We should use mnesia 
+    ## instead
     HordeTest.Inspector.track_node(Node.self(), name)
     {:noreply, name}
   end

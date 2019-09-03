@@ -1,5 +1,6 @@
 %{
   "delta_crdt": {:hex, :delta_crdt, "0.5.7", "fac7d9769fce1c4dc50283abd659018476170a7532d8f0a508d9fcbcd9b8faf2", [:mix], [{:merkle_map, "~> 0.2.0", [hex: :merkle_map, repo: "hexpm", optional: false]}, {:telemetry, "~> 0.4.0", [hex: :telemetry, repo: "hexpm", optional: false]}], "hexpm"},
+  "ets": {:hex, :ets, "0.7.3", "60862855af5ae89bb631c787ab9ba946509d59fa632442ef33947b18ac288101", [:mix], [], "hexpm"},
   "horde": {:hex, :horde, "0.6.1", "175a12bbc9577e91338852ef1f507a9d5f4918e12b800be3e8a7fdf8a1624b5e", [:mix], [{:delta_crdt, "~> 0.5.4", [hex: :delta_crdt, repo: "hexpm", optional: false]}, {:libring, "~> 1.4", [hex: :libring, repo: "hexpm", optional: false]}, {:telemetry, "~> 0.4.0", [hex: :telemetry, repo: "hexpm", optional: false]}, {:telemetry_poller, "~> 0.4.0", [hex: :telemetry_poller, repo: "hexpm", optional: false]}], "hexpm"},
   "jason": {:hex, :jason, "1.1.2", "b03dedea67a99223a2eaf9f1264ce37154564de899fd3d8b9a21b1a6fd64afe7", [:mix], [{:decimal, "~> 1.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm"},
   "libcluster": {:hex, :libcluster, "3.1.1", "cbab97b96141f47f2fe5563183c444bbce9282b3991ef054d69b8805546f0122", [:mix], [{:jason, "~> 1.1.2", [hex: :jason, repo: "hexpm", optional: false]}], "hexpm"},
