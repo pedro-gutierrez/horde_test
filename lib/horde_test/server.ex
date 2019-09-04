@@ -3,7 +3,12 @@ defmodule HordeTest.Server do
   require Logger
 
   def node?(name) do
-    GenServer.call(via_tuple(name), :node)
+    case pid?(name) do
+      pid when is_pid(pid) ->
+        GenServer.call(pid, :node)
+      {:error, error} ->
+        {:error, error}
+    end
   end
 
   def node?() do
@@ -19,6 +24,7 @@ defmodule HordeTest.Server do
     end
   end
 
+  @spec pid? :: identifier | {:error, :undefined | [{identifier, any}, ...]}
   def pid?() do
     pid?(__MODULE__)
   end
@@ -54,6 +60,12 @@ defmodule HordeTest.Server do
     Logger.info("name conflict #{key}, #{value}")
     {:stop, :normal, state}
   end
+
+  def handle_info({:EXIT, _, other}, state) do
+    Logger.info("trapped exit signal #{other}")
+    {:stop, other, state}
+  end
+
 
   def terminate(reason, name) do
     Logger.info("Terminated #{name} with reason #{reason}")

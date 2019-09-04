@@ -12,7 +12,7 @@ defmodule HordeTest do
       id: "HordeTest.Server_#{name}",
       start: {HordeTest.Server, :start_link, [name]},
       shutdown: 10_000,
-      restart: :transient
+      restart: :permanent
     })
   end
 

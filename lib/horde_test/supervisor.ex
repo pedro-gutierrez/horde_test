@@ -11,9 +11,5 @@ defmodule HordeTest.DistSup do
     |> Enum.map(fn node -> {HordeTest.DistSup, node} end)
   end
   
-  def terminate(reason, state) do
-    IO.puts "DistSup terminating with reason #{reason}"
-    IO.inspect state
-  end
 
 end

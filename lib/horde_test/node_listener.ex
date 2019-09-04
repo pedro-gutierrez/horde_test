@@ -10,7 +10,8 @@ defmodule HordeTest.NodeListener do
     {:ok, nil}
   end
 
-  def handle_info({:nodeup, _node, _}, state) do
+  def handle_info({:nodeup, node, _}, state) do
+    IO.puts "node #{node} is up (seen from #{Node.self()})"
     set_members(HordeTest.DistSup)
     set_members(HordeTest.DistRegistry)
     {:noreply, state}

@@ -9,7 +9,7 @@ defmodule HordeTest.Application do
     topologies = [
       example: [
         strategy: Cluster.Strategy.Epmd,
-        config: [hosts: [:"node1@127.0.0.1", :"node2@127.0.0.1", :"node3@127.0.0.1"]],
+        config: [hosts: [:"node1@127.0.0.1", :"node2@127.0.0.1", :"node3@127.0.0.1"]]
       ]
     ]
     
@@ -19,8 +19,8 @@ defmodule HordeTest.Application do
       {Horde.Registry, [name: HordeTest.DistRegistry, keys: :unique]},
       {HordeTest.DistSup, [name: HordeTest.DistSup, 
         shutdown: 1000, 
-        strategy: :one_for_one, 
-        distribution_strategy: Horde.UniformQuorumDistribution 
+        strategy: :one_for_one 
+        #distribution_strategy: Horde.UniformQuorumDistribution 
       ]}
     ]
 
