@@ -9,6 +9,7 @@ defmodule HordeTestTest do
     {:ok, pid} = HordeTest.add_server("pedro")
     node = GenServer.call(pid, :node)
     
+    ## wait for crdts to propagate
     :timer.sleep(200)
 
     {^node, ^pid} = :rpc.call(:"manager@127.0.0.1", HordeTest, :server_info, ["pedro"])
