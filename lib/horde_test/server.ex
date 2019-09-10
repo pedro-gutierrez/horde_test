@@ -59,15 +59,9 @@ defmodule HordeTest.Server do
     {:reply, {:ok, node, name}, name}
   end
   
-  def handle_info({:EXIT, _, {:name_conflict, {{__MODULE__, name}, _}, _registry, _pid}}, name) do
+  def handle_info({:EXIT, _, {:name_conflict, {{_, name}, _}, _registry, _pid}}, name) do
     Logger.warn("name conflict #{name}")
     {:stop, :normal, name}
-  end
-
-  def handle_info({:EXIT, _, other}, name) do
-    IO.inspect other, label: __MODULE__
-    Logger.warn("trapped exit signal in #{name}")
-    {:stop, other, name}
   end
 
   def terminate(reason, name) do
