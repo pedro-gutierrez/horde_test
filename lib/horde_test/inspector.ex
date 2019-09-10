@@ -52,7 +52,9 @@ defmodule HordeTest.Inspector do
         :ignore
     end
   end
-  
+
+  def via_tuple(name), do: {:via, Horde.Registry, {HordeTest.DistRegistry, name}}
+
   def init(_args) do
     :pg2.create(:servers)
     Process.flag(:trap_exit, true)
@@ -97,8 +99,7 @@ defmodule HordeTest.Inspector do
     state 
   end
 
-  def via_tuple(name), do: {:via, Horde.Registry, {HordeTest.DistRegistry, name}}
-
+ 
   defp ping_servers(data) do
     pids = :pg2.get_members(:servers)
     Logger.info("Inspector fetching info from #{length(pids)} existing servers")

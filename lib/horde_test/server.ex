@@ -33,7 +33,9 @@ defmodule HordeTest.Server do
         :ignore
     end
   end
-  
+
+  def via_tuple(name), do: {:via, Horde.Registry, {HordeTest.DistRegistry, {Server, name}}}
+
   def init([name]) do
     Logger.info("Server #{name} came alive in #{Node.self()}")
     :pg2.join(:servers, self())
@@ -58,7 +60,7 @@ defmodule HordeTest.Server do
   end
   
   def handle_info({:EXIT, _, {:name_conflict, {key, value}, _registry, _pid}}, state) do
-    Logger.info("name conflict #{key}, #{value}")
+    Logger.warn("name conflict #{key}, #{value}")
     {:stop, :normal, state}
   end
 
@@ -68,9 +70,9 @@ defmodule HordeTest.Server do
   end
 
   def terminate(reason, name) do
-    Logger.info("Terminated #{name} with reason #{reason}")
+    Logger.warn("Terminated #{name} with reason #{reason}")
     name 
   end
 
-  def via_tuple(name), do: {:via, Horde.Registry, {HordeTest.DistRegistry, {Server, name}}}
+  
 end
