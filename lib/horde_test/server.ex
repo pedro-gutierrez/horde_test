@@ -41,21 +41,23 @@ defmodule HordeTest.Server do
   end
   
   def init([name]) do
+    Logger.info("Server #{name} came alive in #{Node.self()}")
+    :pg2.join(:servers, self())
+    :ok = HordeTest.Inspector.track_node(Node.self(), name)
     Process.flag(:trap_exit, true)
-    {:ok, name, {:continue, :load_state}}
+    {:ok, name}
   end
 
   def handle_call(:node, _, data) do
     {:reply, Node.self(), data}
   end
-  
-  def handle_continue(:load_state, name) do
-    ## This is a bottlneck. We should use mnesia 
-    ## instead
-    HordeTest.Inspector.track_node(Node.self(), name)
+
+  def handle_cast(:ping, name) do
+    Logger.info("Server #{name} in node #{Node.self()} received ping from inspector")
+    :ok = HordeTest.Inspector.track_node(Node.self(), name)
     {:noreply, name}
   end
-
+  
   def handle_info({:EXIT, _, {:name_conflict, {key, value}, _registry, _pid}}, state) do
     Logger.info("name conflict #{key}, #{value}")
     {:stop, :normal, state}
@@ -65,7 +67,6 @@ defmodule HordeTest.Server do
     Logger.info("trapped exit signal #{other}")
     {:stop, other, state}
   end
-
 
   def terminate(reason, name) do
     Logger.info("Terminated #{name} with reason #{reason}")

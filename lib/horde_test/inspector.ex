@@ -4,16 +4,44 @@ defmodule HordeTest.Inspector do
 
   
   def node?() do
-    GenServer.call(via_tuple(__MODULE__), :node)
+    call(:node)
   end
-  
+
+  def ping() do
+    cast(:ping_servers)
+  end
+
   def count_by_node() do
-    GenServer.call(via_tuple(__MODULE__), :count_by_node)
+    call(:count_by_node)
   end
 
   def track_node(node, pid) do
-    GenServer.cast(via_tuple(__MODULE__), {:track, node, pid})
+    call({:track, node, pid})
   end
+
+  defp cast(msg) do
+    with_inspector_pid(fn pid ->
+      GenServer.cast(pid, msg)
+    end)
+  end
+
+  defp call(msg) do
+    with_inspector_pid(fn pid ->
+      GenServer.call(pid, msg)
+    end)
+  end
+  
+  defp with_inspector_pid(next) do
+    case Horde.Registry.lookup(HordeTest.DistRegistry, __MODULE__) do
+      [{pid, _}] ->
+        next.(pid)
+
+      :undefined -> 
+        Logger.error("No inspector pid registered")
+    end
+  end 
+
+  
  
   def start_link() do
     case GenServer.start_link(__MODULE__, [], name: via_tuple(__MODULE__)) do
@@ -21,18 +49,19 @@ defmodule HordeTest.Inspector do
         {:ok, pid}
 
       {:error, {:already_started, pid}} ->
-        Logger.info("#{__MODULE__} already started at #{inspect(pid)}, returning :ignore")
+        Logger.info("Inspector already started at #{inspect(pid)}, returning :ignore")
         :ignore
     end
   end
   
   def init(_args) do
+    :pg2.create(:servers)
     Process.flag(:trap_exit, true)
     {:ok, %{}, {:continue, :load_state}}
   end
 
   def handle_call(:node, _, data) do
-    {:reply, Node.self(), data}
+    {:reply, {Node.self(), self()}, data}
   end
 
   def handle_call(:count_by_node, _, data) do
@@ -43,7 +72,19 @@ defmodule HordeTest.Inspector do
     {:reply, count_by_node, data}
   end
 
+  def handle_call({:track, node, name}, _, data) do
+    Logger.info("Tracking server #{name} from #{node}")
+    {:reply, :ok, Map.put(data, name, node)}
+  end
+
+  def handle_cast(:ping_servers, data) do
+    ping_servers()
+    {:noreply, :data}
+  end
+
   def handle_continue(:load_state, data) do
+    Logger.info("Inspector started on #{Node.self()}")
+    ping_servers()
     {:noreply, data}
   end
 
@@ -52,14 +93,21 @@ defmodule HordeTest.Inspector do
     {:stop, :normal, state}
   end
   
-  def handle_cast({:track, node, server_name}, data) do
-    {:noreply, Map.put(data, server_name, node)}
-  end
+  
 
   def terminate(reason, state) do
-    Logger.info("Terminated server with reason #{reason}")
+    Logger.info("Terminated inspector in #{Node.self()} with reason #{reason}")
     state 
   end
 
   def via_tuple(name), do: {:via, Horde.Registry, {HordeTest.DistRegistry, name}}
+
+  defp ping_servers() do
+    Process.sleep(100)
+    pids = :pg2.get_members(:servers)
+    Logger.info("Inspector notifying #{length(pids)} existing servers")
+    for pid <- pids do 
+      GenServer.cast(pid, :ping)
+    end
+  end
 end
