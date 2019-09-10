@@ -79,7 +79,7 @@ defmodule HordeTest.Inspector do
 
   def handle_cast(:ping_servers, data) do
     ping_servers()
-    {:noreply, :data}
+    {:noreply, data}
   end
 
   def handle_continue(:load_state, data) do
