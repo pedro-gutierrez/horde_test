@@ -6,10 +6,13 @@ defmodule HordeTest.Application do
   use Application
 
   def start(_type, _args) do
+
+    {:ok, nodes} = Application.fetch_env(:horde_test, :nodes)
+
     topologies = [
       example: [
         strategy: Cluster.Strategy.Epmd,
-        config: [hosts: [:"node1@127.0.0.1", :"node2@127.0.0.1", :"node3@127.0.0.1"]]
+        config: [hosts: nodes]
       ]
     ]
     
