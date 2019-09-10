@@ -40,8 +40,6 @@ defmodule HordeTest.Inspector do
         Logger.error("No inspector pid registered")
     end
   end 
-
-  
  
   def start_link() do
     case GenServer.start_link(__MODULE__, [], name: via_tuple(__MODULE__)) do
@@ -78,13 +76,13 @@ defmodule HordeTest.Inspector do
   end
 
   def handle_cast(:ping_servers, data) do
-    ping_servers()
+    data = data |> ping_servers()
     {:noreply, data}
   end
 
   def handle_continue(:load_state, data) do
     Logger.info("Inspector started on #{Node.self()}")
-    ping_servers()
+    data = data |> ping_servers()
     {:noreply, data}
   end
 
@@ -93,8 +91,6 @@ defmodule HordeTest.Inspector do
     {:stop, :normal, state}
   end
   
-  
-
   def terminate(reason, state) do
     Logger.info("Terminated inspector in #{Node.self()} with reason #{reason}")
     state 
@@ -102,12 +98,12 @@ defmodule HordeTest.Inspector do
 
   def via_tuple(name), do: {:via, Horde.Registry, {HordeTest.DistRegistry, name}}
 
-  defp ping_servers() do
-    Process.sleep(100)
+  defp ping_servers(data) do
     pids = :pg2.get_members(:servers)
-    Logger.info("Inspector notifying #{length(pids)} existing servers")
-    for pid <- pids do 
-      GenServer.cast(pid, :ping)
-    end
+    Logger.info("Inspector fetching info from #{length(pids)} existing servers")
+    pids |> Enum.reduce(data, fn pid, acc ->
+      {:ok, node, name} = HordeTest.Server.info(pid)
+      Map.put(acc, name, node)
+    end)
   end
 end

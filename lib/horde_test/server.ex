@@ -2,31 +2,25 @@ defmodule HordeTest.Server do
   use GenServer
   require Logger
 
-  def node?(name) do
+  def info(pid) when is_pid(pid) do
+    GenServer.call(pid, :info)
+  end
+  
+  def info(name) do
     case pid?(name) do
-      pid when is_pid(pid) ->
-        GenServer.call(pid, :node)
       {:error, error} ->
         {:error, error}
+      pid ->
+        info(pid)
     end
   end
 
-  def node?() do
-    node?(__MODULE__)
-  end
-
-  
   def pid?(name) do
     case Horde.Registry.lookup(HordeTest.DistRegistry, {Server, name}) do
       [{pid, _}] -> pid
       other ->
         {:error, other}
     end
-  end
-
-  @spec pid? :: identifier | {:error, :undefined | [{identifier, any}, ...]}
-  def pid?() do
-    pid?(__MODULE__)
   end
 
   def start_link(name) do
@@ -48,14 +42,10 @@ defmodule HordeTest.Server do
     {:ok, name}
   end
 
-  def handle_call(:node, _, data) do
-    {:reply, Node.self(), data}
-  end
-
-  def handle_cast(:ping, name) do
-    Logger.info("Server #{name} in node #{Node.self()} received ping from inspector")
-    :ok = HordeTest.Inspector.track_node(Node.self(), name)
-    {:noreply, name}
+  def handle_call(:info, _, name) do
+    node = Node.self()
+    Logger.info("Server #{name} in node #{node} received ping from inspector")
+    {:reply, {:ok, node, name}, name}
   end
   
   def handle_info({:EXIT, _, {:name_conflict, {key, value}, _registry, _pid}}, state) do
