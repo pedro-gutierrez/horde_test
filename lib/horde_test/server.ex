@@ -37,9 +37,18 @@ defmodule HordeTest.Server do
   def init([name]) do
     Logger.info("Server #{name} came alive in #{Node.self()}")
     :pg2.join(:servers, self())
-    :ok = HordeTest.Inspector.track_node(Node.self(), name)
     Process.flag(:trap_exit, true)
-    {:ok, name}
+    {:ok, name, {:continue, :register}}
+  end
+
+  def handle_continue(:register, name) do
+    case HordeTest.Inspector.track_node(Node.self(), name) do
+      :ok ->
+        Logger.info("Server #{name} sent its node info to the inspector")
+      {:error, e} ->
+        Logger.error("Server #{name} could not send its node info to inspector: #{e}")
+    end
+    {:noreply, name}
   end
 
   def handle_call(:info, _, name) do

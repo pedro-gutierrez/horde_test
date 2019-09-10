@@ -38,6 +38,7 @@ defmodule HordeTest.Inspector do
 
       :undefined -> 
         Logger.error("No inspector pid registered")
+        {:error, :no_pid}
     end
   end 
  
