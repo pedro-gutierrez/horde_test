@@ -67,7 +67,7 @@ defmodule HordeTest.Server do
   def handle_info({:EXIT, _, other}, name) do
     IO.inspect other, label: __MODULE__
     Logger.warn("trapped exit signal in #{name}")
-    {:stop, other, state}
+    {:stop, other, name}
   end
 
   def terminate(reason, name) do
