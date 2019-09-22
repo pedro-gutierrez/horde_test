@@ -2,72 +2,62 @@ defmodule HordeTest.Server do
   use GenServer
   require Logger
 
+  @cluster HordeTest.Cluster
+
   def info(pid) when is_pid(pid) do
     GenServer.call(pid, :info)
   end
-  
-  def info(name) do
-    case pid?(name) do
-      {:error, error} ->
-        {:error, error}
-      pid ->
+
+  def info(num) when is_number(num) do
+    num |> name() |> info()
+  end
+
+  def info(name) when is_binary(name) do
+    case @cluster.whereis(__MODULE__, name) do
+      {:ok, pid} ->
         info(pid)
+
+      {:error, _} = e ->
+        e
     end
   end
 
-  def pid?(name) do
-    case Horde.Registry.lookup(HordeTest.DistRegistry, {Server, name}) do
-      [{pid, _}] -> pid
-      other ->
-        {:error, other}
-    end
-  end
+  def name(num) when is_number(num), do: "s#{num}"
 
   def start_link(name) do
-    case GenServer.start_link(__MODULE__, [name], name: via_tuple(name)) do
+    case GenServer.start_link(__MODULE__, [name], name: @cluster.via_tuple(__MODULE__, name)) do
       {:ok, pid} ->
         {:ok, pid}
 
       {:error, {:already_started, pid}} ->
-        Logger.info("#{name} already started at #{inspect(pid)}, returning :ignore")
+        Logger.info(
+          "Trying to start #{name} in node #{Node.self()}, but already started with pid #{
+            inspect(pid)
+          }. "
+        )
+
         :ignore
     end
   end
 
-  def via_tuple(name), do: {:via, Horde.Registry, {HordeTest.DistRegistry, {Server, name}}}
-
   def init([name]) do
-    Logger.info("Server #{name} came alive in #{Node.self()}")
-    :pg2.join(:servers, self())
     Process.flag(:trap_exit, true)
-    {:ok, name, {:continue, :register}}
-  end
-
-  def handle_continue(:register, name) do
-    case HordeTest.Inspector.track_node(Node.self(), name) do
-      :ok ->
-        Logger.info("Server #{name} sent its node info to the inspector")
-      {:error, e} ->
-        Logger.error("Server #{name} could not send its node info to inspector: #{e}")
-    end
-    {:noreply, name}
+    Logger.info("Server #{name} came alive in #{Node.self()}")
+    {:ok, name}
   end
 
   def handle_call(:info, _, name) do
     node = Node.self()
-    Logger.info("Server #{name} in node #{node} received ping from inspector")
-    {:reply, {:ok, node, name}, name}
+    {:reply, {:ok, node, self()}, name}
   end
-  
+
   def handle_info({:EXIT, _, {:name_conflict, {{_, name}, _}, _registry, _pid}}, name) do
-    Logger.warn("name conflict #{name}")
+    Logger.warn("name conflict #{name} in node #{Node.self()}")
     {:stop, :normal, name}
   end
 
   def terminate(reason, name) do
-    Logger.warn("Terminated #{name} with reason #{reason}")
-    name 
+    Logger.warn("Server #{name} (#{self() |> inspect}) terminated with reason #{reason}")
+    name
   end
-
-  
 end

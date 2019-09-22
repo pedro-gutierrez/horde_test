@@ -4,35 +4,21 @@ defmodule HordeTest.Application do
   @moduledoc false
 
   use Application
+  @cluster HordeTest.Cluster
 
   def start(_type, _args) do
+    {:ok, pid} =
+      Supervisor.start_link(
+        [
+          @cluster
+        ],
+        strategy: :one_for_one,
+        name: HordeTest.Supervisor
+      )
 
-    {:ok, nodes} = Application.fetch_env(:horde_test, :nodes)
-
-    topologies = [
-      example: [
-        strategy: Cluster.Strategy.Epmd,
-        config: [hosts: nodes]
-      ]
-    ]
-    
-    children = [
-      {Cluster.Supervisor, [topologies, [name: HordeTest.ClusterSupervisor]]},
-      {HordeTest.NodeListener, [name: HordeTest.NodeListener]},
-      {Horde.Registry, [name: HordeTest.DistRegistry, keys: :unique]},
-      {HordeTest.DistSup, [name: HordeTest.DistSup, 
-        shutdown: 1000, 
-        strategy: :one_for_one 
-        #distribution_strategy: Horde.UniformQuorumDistribution 
-      ]}
-    ]
-
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: HordeTest.Supervisor]
-    {:ok, pid} = Supervisor.start_link(children, opts)
-
-    HordeTest.add_inspector()
+    # Start the cluster by default
+    # on the current node
+    :ok = @cluster.start()
     {:ok, pid}
   end
 end
