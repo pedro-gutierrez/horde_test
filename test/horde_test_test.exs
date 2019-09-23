@@ -104,8 +104,8 @@ defmodule HordeTestTest do
   end
 
   defp setup_cluster(size, dist \\ Horde.UniformQuorumDistribution) do
-    stop_cluster(Node.self())
-    wait_for_cluster_stopped(Node.self())
+    Application.stop(:horde_test)
+    Application.ensure_all_started(:horde_test)
 
     nodes = LocalCluster.start_nodes("horde", size)
 
